@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { exportDriveLogs, exportFuelLogs } from "@/lib/excel";
 import {
   defaultSettings,
@@ -121,6 +121,7 @@ export default function Home() {
   const [screen, setScreen] = useState<"list" | "form">("list");
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const customPurposeInputRef = useRef<HTMLInputElement>(null);
 
   const refreshLogs = async () => {
     const [nextDriveLogs, nextFuelLogs] = await Promise.all([
@@ -149,7 +150,7 @@ export default function Home() {
     () =>
       driveLogs
         .filter((log) => log.date.startsWith(selectedMonth))
-        .sort((a, b) => `${a.date} ${a.startTime}`.localeCompare(`${b.date} ${b.startTime}`)),
+        .sort((a, b) => `${b.date} ${b.startTime}`.localeCompare(`${a.date} ${a.startTime}`)),
     [driveLogs, selectedMonth],
   );
 
@@ -157,7 +158,7 @@ export default function Home() {
     () =>
       fuelLogs
         .filter((log) => log.date.startsWith(selectedMonth))
-        .sort((a, b) => a.date.localeCompare(b.date)),
+        .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt)),
     [fuelLogs, selectedMonth],
   );
 
@@ -172,6 +173,7 @@ export default function Home() {
     0,
     toNumber(driveForm.endOdometer) - toNumber(driveForm.startOdometer),
   );
+  const isCustomPurpose = !purposeOptions.includes(driveForm.purpose);
 
   const openNewLogForm = () => {
     setActiveTab("drive");
@@ -357,15 +359,22 @@ export default function Home() {
                     className="app-card p-4 sm:p-5"
                     key={log.id}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
+                    <div className="grid grid-cols-[minmax(0,1fr)_56px] items-start gap-3">
+                      <div className="min-w-0">
                         <p className="font-semibold text-[rgba(0,0,0,0.87)]">{log.date}</p>
-                        <p className="mt-1 text-sm text-[var(--text-soft)]">
-                          {log.startTime || "--:--"} - {log.endTime || "--:--"} ·{" "}
-                          {log.destination}
+                        <p className="mt-1 text-sm leading-5 text-[var(--text-soft)]">
+                          <span className="whitespace-nowrap">
+                            {log.startTime || "--:--"} - {log.endTime || "--:--"}
+                          </span>
+                          {log.destination ? (
+                            <>
+                              <span aria-hidden="true"> · </span>
+                              <span className="break-words">{log.destination}</span>
+                            </>
+                          ) : null}
                         </p>
                       </div>
-                      <p className="rounded-full bg-[var(--green-light)] px-3 py-1 text-sm font-semibold text-[var(--house-green)]">
+                      <p className="flex min-h-11 w-14 items-center justify-center rounded-full bg-[var(--green-light)] px-2 py-1 text-center text-sm font-semibold leading-4 text-[var(--house-green)]">
                         {formatKm(log.distance)}
                       </p>
                     </div>
@@ -551,9 +560,24 @@ export default function Home() {
                             {purpose}
                           </button>
                         ))}
+                        <button
+                          className={`app-pill min-h-10 px-2 text-sm ${
+                            isCustomPurpose
+                              ? "app-purpose-active"
+                              : "border border-[#d6dbde] text-[var(--text-soft)]"
+                          }`}
+                          onClick={() => {
+                            setDriveForm({ ...driveForm, purpose: "" });
+                            window.setTimeout(() => customPurposeInputRef.current?.focus(), 0);
+                          }}
+                          type="button"
+                        >
+                          직접입력
+                        </button>
                       </div>
                       <input
                         className="app-input"
+                        ref={customPurposeInputRef}
                         value={driveForm.purpose}
                         onChange={(event) =>
                           setDriveForm({ ...driveForm, purpose: event.target.value })
