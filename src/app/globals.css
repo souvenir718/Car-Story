@@ -1,8 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f2f0eb;
+  --foreground: rgba(0, 0, 0, 0.87);
+  --brand-green: #006241;
+  --green-accent: #00754a;
+  --house-green: #1e3932;
+  --green-light: #d4e9e2;
+  --ceramic: #edebe9;
+  --text-soft: rgba(0, 0, 0, 0.58);
+  --danger: #c82014;
+  --card-shadow: 0 0 0.5px rgba(0, 0, 0, 0.14), 0 1px 1px rgba(0, 0, 0, 0.24);
+  --float-shadow: 0 0 6px rgba(0, 0, 0, 0.24), 0 8px 12px rgba(0, 0, 0, 0.14);
 }
 
 @theme inline {
@@ -12,15 +21,119 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+button:active {
+  transform: scale(0.95);
+}
+
+.app-card {
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: var(--card-shadow);
+}
+
+.app-green-band {
+  background: var(--house-green);
+  color: #ffffff;
+}
+
+.app-pill {
+  min-height: 44px;
+  border-radius: 50px;
+  padding: 7px 16px;
+  font-weight: 600;
+}
+
+.app-pill-primary {
+  border: 1px solid var(--green-accent);
+  background: var(--green-accent);
+  color: #ffffff;
+}
+
+.app-pill-outline {
+  border: 1px solid var(--green-accent);
+  background: transparent;
+  color: var(--green-accent);
+}
+
+.app-purpose-active {
+  border: 1px solid var(--green-accent);
+  background: color-mix(in srgb, var(--green-light) 55%, white);
+  color: var(--house-green);
+}
+
+.app-pill-dark-outline {
+  border: 1px solid rgba(0, 0, 0, 0.87);
+  background: transparent;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.app-pill-on-dark {
+  border: 1px solid #ffffff;
+  background: #ffffff;
+  color: var(--green-accent);
+}
+
+.app-danger-outline {
+  border: 1px solid var(--danger);
+  background: transparent;
+  color: var(--danger);
+}
+
+.app-input {
+  min-height: 48px;
+  width: 100%;
+  min-width: 0;
+  border-radius: 12px;
+  border: 1px solid #d6dbde;
+  background: #ffffff;
+  padding: 12px;
+  color: rgba(0, 0, 0, 0.87);
+  outline: none;
+}
+
+.app-input:focus {
+  border-color: var(--green-accent);
+  box-shadow: 0 0 0 1px var(--green-accent);
+}
+
+.app-label {
+  display: grid;
+  gap: 4px;
+  color: rgba(0, 0, 0, 0.87);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.app-fab {
+  min-height: 56px;
+  border-radius: 50px;
+  background: var(--green-accent);
+  color: #ffffff;
+  box-shadow: var(--float-shadow);
+}
+
+.app-soft-surface {
+  background: var(--ceramic);
 }
