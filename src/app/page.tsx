@@ -268,7 +268,7 @@ export default function Home() {
           <div>
             <p className="text-sm font-semibold text-white/70">{settings.centerName}</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-[-0.01em] sm:text-3xl">
-              {screen === "form" ? "기록 추가" : "카스토리"}
+              {screen === "form" ? "기록 추가" : "차량운행일지"}
             </h1>
           </div>
           {screen === "form" ? (

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { PwaRegister } from "./pwa-register";
 import "./globals.css";
 
@@ -56,6 +57,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <PwaRegister />
         {children}
+        <Analytics />
       </body>
     </html>
   );
