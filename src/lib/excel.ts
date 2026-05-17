@@ -10,6 +10,16 @@ const monthLabel = (month: string) => {
 
 const toDateText = (date: string) => date.replaceAll("-", ".");
 
+const applyNumberFormat = (
+  worksheet: ExcelJS.Worksheet,
+  columnKeys: string[],
+  format: string,
+) => {
+  columnKeys.forEach((key) => {
+    worksheet.getColumn(key).numFmt = format;
+  });
+};
+
 const applyHeaderStyle = (worksheet: ExcelJS.Worksheet) => {
   worksheet.getRow(2).font = { bold: true };
   worksheet.getRow(2).alignment = { horizontal: "center", vertical: "middle" };
@@ -111,6 +121,7 @@ export const exportDriveLogs = async (
     });
   });
 
+  applyNumberFormat(worksheet, ["startOdometer", "endOdometer", "distance"], '#,##0 "km"');
   applyHeaderStyle(worksheet);
   await downloadWorkbook(workbook, `${monthLabel(month)}_차량운행_및_정비일지.xlsx`);
 };
@@ -155,13 +166,14 @@ export const exportFuelLogs = async (
       date: toDateText(log.date),
       fuelAmount: `${log.fuelAmount.toLocaleString()} 리터`,
       amount: `${log.amount.toLocaleString()}원`,
-      odometer: `${log.odometer.toLocaleString()}km`,
+      odometer: log.odometer,
       memo: log.memo,
       driverName: settings.driverName,
       director: "",
     });
   });
 
+  applyNumberFormat(worksheet, ["odometer"], '#,##0 "km"');
   applyHeaderStyle(worksheet);
   await downloadWorkbook(workbook, `${monthLabel(month)}_유류수불대장.xlsx`);
 };

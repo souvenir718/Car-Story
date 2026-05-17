@@ -59,6 +59,23 @@ const currentMonth = () => nowDate().slice(0, 7);
 
 const createId = () => crypto.randomUUID();
 
+const formatIntegerInput = (value: string) => {
+  const digits = value.replace(/\D/g, "");
+  return digits ? Number(digits).toLocaleString() : "";
+};
+
+const formatDecimalInput = (value: string) => {
+  const normalized = value.replace(/[^\d.]/g, "");
+  const [integer = "", ...decimalParts] = normalized.split(".");
+  const integerText = integer ? Number(integer).toLocaleString() : "";
+
+  if (!normalized.includes(".")) {
+    return integerText;
+  }
+
+  return `${integerText || "0"}.${decimalParts.join("")}`;
+};
+
 const emptyDriveForm = (lastOdometer = ""): DriveForm => ({
   id: createId(),
   date: nowDate(),
@@ -68,7 +85,7 @@ const emptyDriveForm = (lastOdometer = ""): DriveForm => ({
   purpose: "등원지도",
   startTime: nowTime(),
   endTime: "",
-  startOdometer: lastOdometer,
+  startOdometer: formatIntegerInput(lastOdometer),
   endOdometer: "",
   memo: "",
   createdAt: new Date().toISOString(),
@@ -85,6 +102,8 @@ const emptyFuelForm = (): FuelForm => ({
 });
 
 const toNumber = (value: string) => Number(value.replaceAll(",", "")) || 0;
+
+const formatKm = (value: number) => `${value.toLocaleString()} km`;
 
 const formatMonth = (month: string) => {
   const [year, monthNumber] = month.split("-");
@@ -146,7 +165,7 @@ export default function Home() {
     const latest = [...driveLogs].sort((a, b) =>
       `${b.date} ${b.endTime}`.localeCompare(`${a.date} ${a.endTime}`),
     )[0];
-    return latest?.endOdometer ? String(latest.endOdometer) : "";
+    return latest?.endOdometer ? formatIntegerInput(String(latest.endOdometer)) : "";
   }, [driveLogs]);
 
   const driveDistance = Math.max(
@@ -191,7 +210,7 @@ export default function Home() {
 
     await saveDriveLog(log);
     await refreshLogs();
-    setDriveForm(emptyDriveForm(String(endOdometer || lastOdometer)));
+    setDriveForm(emptyDriveForm(String(endOdometer || toNumber(lastOdometer))));
     setStatus("운행 기록을 저장했습니다.");
     setScreen("list");
   };
@@ -228,8 +247,8 @@ export default function Home() {
       purpose: log.purpose,
       startTime: log.startTime,
       endTime: log.endTime,
-      startOdometer: String(log.startOdometer || ""),
-      endOdometer: String(log.endOdometer || ""),
+      startOdometer: formatIntegerInput(String(log.startOdometer || "")),
+      endOdometer: formatIntegerInput(String(log.endOdometer || "")),
       memo: log.memo,
       createdAt: log.createdAt,
     });
@@ -241,9 +260,9 @@ export default function Home() {
     setFuelForm({
       id: log.id,
       date: log.date,
-      fuelAmount: String(log.fuelAmount || ""),
-      amount: String(log.amount || ""),
-      odometer: String(log.odometer || ""),
+      fuelAmount: formatDecimalInput(String(log.fuelAmount || "")),
+      amount: formatIntegerInput(String(log.amount || "")),
+      odometer: formatIntegerInput(String(log.odometer || "")),
       memo: log.memo,
       createdAt: log.createdAt,
     });
@@ -299,7 +318,7 @@ export default function Home() {
                   <Metric label="운행" value={`${monthlyDriveLogs.length}건`} />
                   <Metric
                     label="주행"
-                    value={`${monthlyDriveLogs.reduce((sum, log) => sum + log.distance, 0)}km`}
+                    value={formatKm(monthlyDriveLogs.reduce((sum, log) => sum + log.distance, 0))}
                   />
                   <Metric label="주유" value={`${monthlyFuelLogs.length}건`} />
                 </div>
@@ -347,7 +366,7 @@ export default function Home() {
                         </p>
                       </div>
                       <p className="rounded-full bg-[var(--green-light)] px-3 py-1 text-sm font-semibold text-[var(--house-green)]">
-                        {log.distance}km
+                        {formatKm(log.distance)}
                       </p>
                     </div>
                     <p className="mt-3 text-sm text-[rgba(0,0,0,0.87)]">
@@ -355,8 +374,7 @@ export default function Home() {
                       {log.purpose}
                     </p>
                     <p className="mt-1 text-sm text-[var(--text-soft)]">
-                      {log.startOdometer.toLocaleString()}km →{" "}
-                      {log.endOdometer.toLocaleString()}km
+                      {formatKm(log.startOdometer)} → {formatKm(log.endOdometer)}
                     </p>
                     {log.memo ? (
                       <p className="mt-2 text-sm text-[var(--text-soft)]">{log.memo}</p>
@@ -395,11 +413,11 @@ export default function Home() {
                         <p className="font-semibold text-[rgba(0,0,0,0.87)]">{log.date}</p>
                         <p className="mt-1 text-sm text-[var(--text-soft)]">
                           {log.fuelAmount.toLocaleString()} 리터 ·{" "}
-                          {log.odometer.toLocaleString()}km
+                          {formatKm(log.odometer)}
                         </p>
                       </div>
                       <p className="rounded-full bg-[var(--green-light)] px-3 py-1 text-sm font-semibold text-[var(--house-green)]">
-                        {log.amount.toLocaleString()}원
+                        {log.amount.toLocaleString()} 원
                       </p>
                     </div>
                     {log.memo ? (
@@ -501,7 +519,10 @@ export default function Home() {
                         inputMode="numeric"
                         value={driveForm.passengerCount}
                         onChange={(value) =>
-                          setDriveForm({ ...driveForm, passengerCount: value })
+                          setDriveForm({
+                            ...driveForm,
+                            passengerCount: value.replace(/\D/g, ""),
+                          })
                         }
                       />
                     </div>
@@ -548,23 +569,31 @@ export default function Home() {
                       <Input
                         label="출발 km"
                         inputMode="numeric"
-                        value={driveForm.startOdometer}
+                        suffix="km"
+                        value={formatIntegerInput(driveForm.startOdometer)}
                         onChange={(value) =>
-                          setDriveForm({ ...driveForm, startOdometer: value })
+                          setDriveForm({
+                            ...driveForm,
+                            startOdometer: formatIntegerInput(value),
+                          })
                         }
                       />
                       <Input
                         label="도착 km"
                         inputMode="numeric"
-                        value={driveForm.endOdometer}
+                        suffix="km"
+                        value={formatIntegerInput(driveForm.endOdometer)}
                         onChange={(value) =>
-                          setDriveForm({ ...driveForm, endOdometer: value })
+                          setDriveForm({
+                            ...driveForm,
+                            endOdometer: formatIntegerInput(value),
+                          })
                         }
                       />
                       <div className="rounded-xl border border-[var(--green-light)] bg-[var(--green-light)]/70 p-3">
                         <p className="text-xs font-semibold text-[var(--brand-green)]">주행거리</p>
                         <p className="mt-1 text-xl font-bold text-[var(--house-green)]">
-                          {driveDistance} km
+                          {formatKm(driveDistance)}
                         </p>
                       </div>
                     </div>
@@ -600,23 +629,29 @@ export default function Home() {
                   <Input
                     label="주유량"
                     inputMode="decimal"
-                    value={fuelForm.fuelAmount}
-                    onChange={(value) => setFuelForm({ ...fuelForm, fuelAmount: value })}
-                    placeholder="리터"
+                    suffix="리터"
+                    value={formatDecimalInput(fuelForm.fuelAmount)}
+                    onChange={(value) =>
+                      setFuelForm({ ...fuelForm, fuelAmount: formatDecimalInput(value) })
+                    }
                   />
                   <Input
                     label="금액"
                     inputMode="numeric"
-                    value={fuelForm.amount}
-                    onChange={(value) => setFuelForm({ ...fuelForm, amount: value })}
-                    placeholder="원"
+                    suffix="원"
+                    value={formatIntegerInput(fuelForm.amount)}
+                    onChange={(value) =>
+                      setFuelForm({ ...fuelForm, amount: formatIntegerInput(value) })
+                    }
                   />
                   <Input
                     label="주행 총거리"
                     inputMode="numeric"
-                    value={fuelForm.odometer}
-                    onChange={(value) => setFuelForm({ ...fuelForm, odometer: value })}
-                    placeholder="km"
+                    suffix="km"
+                    value={formatIntegerInput(fuelForm.odometer)}
+                    onChange={(value) =>
+                      setFuelForm({ ...fuelForm, odometer: formatIntegerInput(value) })
+                    }
                   />
                 </div>
                 <label className="app-label">
@@ -647,6 +682,7 @@ function Input({
   value,
   inputMode,
   placeholder,
+  suffix,
   type = "text",
 }: {
   label: string;
@@ -654,19 +690,27 @@ function Input({
   value: string;
   inputMode?: "decimal" | "numeric";
   placeholder?: string;
+  suffix?: string;
   type?: string;
 }) {
   return (
     <label className="app-label">
       {label}
-      <input
-        className="app-input"
-        inputMode={inputMode}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        type={type}
-        value={value}
-      />
+      <span className="relative block">
+        <input
+          className={`app-input ${suffix ? "pr-16" : ""}`}
+          inputMode={inputMode}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          type={type}
+          value={value}
+        />
+        {suffix ? (
+          <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm font-semibold text-[var(--text-soft)]">
+            {suffix}
+          </span>
+        ) : null}
+      </span>
     </label>
   );
 }
