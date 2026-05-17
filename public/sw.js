@@ -1,4 +1,4 @@
-const CACHE_NAME = "carstory-v1";
+const CACHE_NAME = "carstory-v2";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
@@ -48,17 +48,15 @@ self.addEventListener("fetch", (event) => {
   }
 
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      const networkResponse = fetch(request).then((response) => {
+    fetch(request)
+      .then((response) => {
         if (response.ok) {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
         }
 
         return response;
-      });
-
-      return cachedResponse || networkResponse;
-    }),
+      })
+      .catch(() => caches.match(request)),
   );
 });
